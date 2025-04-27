@@ -7,38 +7,39 @@
 
 ## 1. Overview
 
-This project aims to determine whether the error rates of IBM's `Rzz` and `Rx` gates vary significantly with their rotation angle. This is motivated through a possibility of improving performance of the Quantum Approximation Optimisation Algorithm (QAOA), which is constructed by `Rzz` and `Rx` gates, by tuning circuits such that the expected rotations angles of the `Rzz` and `Rx` gates lie within low-error regions of the rotation angle space.
+This project aims to determine whether the error rates of IBM's `Rzz` and `Rx` gates vary significantly with their rotation angle. This is motivated by explorations into whether tuning the rotation angles of `Rzz` and `Rx` gates to low-error regions can improve the performance of the Quantum Approximation Optimization Algorithm (QAOA).
 
-Simple circuits containing a single `Rzz` or `Rx` gate are constructed and evaluated using IBM hardware (for the `Rzz` gate) or IBM simulators loaded with noise models (for the `Rx` gates). This is done for a range of rotation angles and the measured results are compared to anticipated results to determine a measure of error.
+Simple circuits containing a single `Rzz` or `Rx` gate are constructed and evaluated using IBM hardware (for the `Rzz` gate) or IBM simulators loaded with noise models (for the `Rx` gate). This is done for a range of rotation angles and the measured results are compared to anticipated results to determine a measure of error.
 
-For the `Rx` gate, strong evidence of a sinusodial relationship between rotation angle and error rate of the gate was found. This relationship had a period of 0.5π and a peak to trough drop of 90%. For the `Rz` gate no evidence was found of a relationship between the rotation angle and error rate of the gate. As the error contribution to QAOA from these gates is dominated by the `Rzz` gate contribution, improvements to the `Rx` gate would have negligible effect on the quality of the QAOA results and this work currently shows no possibility of improving QAOA results on IBM devices through calibration of rotation angles. Further work could investigate whether this is also the case for other hardware devices or when including the effects of error suppression techniques, which are neglected here.
+<!-- could replace peak-to-trough with amplitude -->
+
+For the `Rx` gate, strong evidence of a sinusodial relationship between rotation angle and error rate of the gate was found. This relationship had a period of 0.5π and a peak to trough drop of 90%. For the `Rz` gate no evidence was found of a relationship between the rotation angle and error rate of the gate. As the error contribution to QAOA from these gates is dominated by the `Rzz` gate contribution, improvements to the `Rx` gate would have negligible effect on the quality of the QAOA results. Further work could investigate whether this is also the case for other hardware devices or when including the effects of error suppression techniques, which are neglected here.
 
 ---
 
 ## 2. Background
 
-The QAOA algorithm [\[1\]](#ref-1) holds potential within the Noisy Intermediate Scale Quantum (NISQ) era of quantum computers due to its low required circuit depth and application to combinatorial optimisation problems [\[2\]](#ref-2). This algorithm optimises gate parameters in the quantum circuit by evaluating the circuit repeatedly within a classical optimiser. To reduce the number of optimisation evaluations required, work has been done to determine suitable initial parameters for the quantum circuit, for instance through bilinear strategy, TQA initialisation [\[3\]](#ref-3), or transfer learning [\[4\]](#ref-4). The parameter optimisations then search a subset of the search space near these initial parameters and achieve results with modest reduction in quality at far fewer optimisation evaluations.
+The QAOA algorithm [\[1\]](#ref-1) holds potential within the Noisy Intermediate Scale Quantum (NISQ) era of quantum computers due to its low required circuit depth and application to combinatorial optimisation problems [\[2\]](#ref-2). This algorithm optimises gate parameters in the quantum circuit by evaluating the circuit repeatedly within a classical optimiser. To reduce the number of optimisation evaluations required, work has been done to determine suitable initial parameters for the quantum circuit, for instance through bilinear strategy, TQA initialisation [\[3\]](#ref-3), or transfer learning [\[4\]](#ref-4). The parameter optimisations then search a subset of the search space near these initial parameters and achieve results with modest reduction in quality at far fewer optimisation evaluations [\[4\]](#ref-4).
 
-<!-- Explicit assumption: final angles are near initial ones, should reference something to do with this -->
+<!-- and on other gate based devices? -->
 
-<!-- need to link the rotation angles to the parameters more closely, maybe move the description of the QAOA circuit up to here? -->
+The QAOA algorithm is implemented on gate based devices through a series of layers of `Rx` and `Rzz` gates [\[6\]](#ref-6). A 2-layer example can be seen in [Figure 1](#fig-1). As the number of layers increase the theoretical likelihood of a good result improves (each layer can be thought of as additional and diminishing extra term in an approximation). The rotation angles for the gate in each layer are controlled by the parameters trained during the optimisation process. From convention, the parameter β<sub>n</sub> is two times the rotation angle of the `Rx` gate for the n<sup>th</sup> layer, while γ<sub>n</sub> is two times the rotation angle of the `Rzz` gate for the n<sup>th</sup> layer, as shown in [Figure 1](#fig-1). This means each additional layer introduces two additional parameters to be optimised, increasing the resources required for the optimisation loop.
 
-For hardware implementations, each operation has an associated error attached to it, and the accumulation of these errors negatively impacts the quality of the results produced. For QAOA, the gate errors comprise mainly of the `Rzz` and `Rx` gates. If these gates have a relationship between their rotation angle and their error rate, this work proposes the error rate of the circuit could be reduced by constructing gates such that the angles of rotation given in the initialisation strategies (which are expected to be close to the final rotation angles used) lie within the low-error regions of the rotation angle space. This is illustrated in [Figure 1](#fig-0), where a dummy gate error response to the rotation angle is offset to reduce the error rate at a gate rotation angle of π. This gate offset is interpreted as an adjustment to the initial preparation state of the qubits or a different global phase, but the physical interpretation of this change will not be explored further in this paper. Instead, this work only aims to investigate whether a motivation exists for this technique.
+![QAOA double Layer Circuit](images/QAOA_double_layer_rx_rzz.png)
+**Figure 1:** Two layers of the IBM implemented QAOA circuit, showing the arrangement of `Rx` (single-qubit rotations) and `Rzz` gates (2-qubit entangling operations). Note that the `Rzz` gates consists of a 2-qubit `zz` interaction followed by 2 `Rz` gates.
+<a id="fig-1"></a>
+
+Reducing the error rate of the `Rx` and `Rzz` gates would reduce the additional error contribution of each QAOA layer, improving the quality of results. If these gates have a relationship between their rotation angle and their error rate, this work proposes the error rate of the circuit could be reduced by constructing gates such that the angles of rotation given in the initialisation strategies (which are expected to be close to the final rotation angles used) lie within the low-error regions of the rotation angle space. This is illustrated in [Figure 2](#fig-0), where a dummy gate error response to the rotation angle is offset to reduce the error rate at a gate rotation angle of π.
+
+The physical interpretation of this rotation angle is not explored in this work. This could perhaps be implemented by altering the initial preparation state of the qubits or a global phase adjustment. These changes may introduce additional errors that make this adjustment non-worthwhile. This work aims purely to establish the motivation for whether these methods should be explored further.
 
 <!-- redo this plot to remove fidelity -->
 
-![Illustrative Fidelity Improvement](images/illustrative_gate_angle_offset.jpg)  
-**Figure 1:** An example of potential gate error rate improvement at a specific rotation angle. Here, the gate has low rates of error at 0.5π, but transfer learning suggests an initial rotation angle of π. Applying an offset of 0.5π reduces the error rate at π.
+![Illustrative Fidelity Improvement](images/example_error_offset_plot.png)  
+**Figure 2:** An example of potential gate error rate improvement at a specific rotation angle. Here, the gate has low rates of error at 0.5π, but transfer learning suggests an initial rotation angle of π. Applying an offset of 0.5π reduces the error rate at π.
 <a id="fig-0"></a>
 
-<!-- In this example, the offset aligns the rotation angle with a region of higher fidelity, as determined by the gate's error profile -->
-
-Hardware implementations leverage error suppression techniques to improve the quality of results produced. IBM offers control over the suppression technique of dynamic decoupling, which uses microwave pulses to reduce decoherence in idling qubits [\[9\]](#ref-9). These pulses may then interact with rotation gates in a way that introduces angle-dependent error rates. However, considering error suppression techniques is beyond the scope of this initial project. Future work could explore these factors.
-
-<!--
-The initial parameters can be determined using
-
-The efficacy of this potential approach is dependent upon the existence and strength of a relationship between the error profile of `Rzz` and `Rx` gates and their rotation angle. -->
+Hardware implementations leverage error suppression techniques to improve the quality of results produced. For instance, IBM offers control over the suppression technique of dynamic decoupling, which uses microwave pulses to reduce decoherence in idling qubits [\[9\]](#ref-9). These pulses may then interact with rotation gates in a way that introduces angle-dependent error rates. However, considering error suppression techniques is beyond the scope of this initial project. Future work could explore how these factors contribute to angle-dependent error rates.
 
 ---
 
@@ -48,17 +49,36 @@ The efficacy of this potential approach is dependent upon the existence and stre
 
 For this investigation, freely-available IBM hardware was used due to its accessibility and record of strong documentation online through the open-source library QISKIT [\[5\]](#ref-5). All devices offered under the free plan have identical specifications. The device `ibm_brisbane` was chosen arbitrarily.
 
-<!-- TODO, talk about alpha and beta here, maybe move some discussion up -->
+Generally, in each layer of the QAOA algorithm, the gate error contribution is dominated by the 2-qubit `Rzz` gate, with IBM reporting an error rate two orders of magnitude higher for the `Rzz` gate as compared to the `Rx` gate for `ibm_brisbane` [\[7\]](#ref-7). In this investigation, these gates were probed independently for their relationship between error rate and angle of rotation. Due to the larger contribution of the `Rzz` gate to the overall QAOA circuit error, this gate was investigated using the limited free resources of the `ibm_brisbane` device. The `Rx` gate was investigated using only the IBM simulator provided in QISKIT, loaded with an `ibm_brisbane` noise model.
 
-On IBM devices, QAOA algorithms are implemented using layers of `Rx(θ)` and `Rzz(θ)` gates, where a single layer QAOA can be decomposed as shown in [Figure 2](#fig-1) [\[6\]](#ref-6). In this implementation, the error rate is dominated by the 2-qubit `Rzz` gate, with IBM reporting an error rate two orders of magnitude higher for the `Rzz` gate as compared to the `Rx` gate for `ibm_brisbane` [\[7\]](#ref-7). In this investigation, these gates were probed independently for their relationship between error rate and angle of rotation. Due to the larger contribution of the `Rzz` gate to the overall QAOA circuit error, this gate was investigated using the limited free resources of the `ibm_brisbane` device. The `Rx` gate was investigated using only the IBM simulator provided in QISKIT, loaded with an `ibm_brisbane` noise model.
+### Evaluation Metrics
 
-![QAOA Single Layer Circuit](images/QAOA_single_layer_rx_rzz.png)  
-**Figure 2:** A single layer of the IBM implemented QAOA circuit, showing the arrangement of `Rx` and `Rzz` gates.  
-<a id="fig-1"></a>
+This investigation is concerned primarily with the how the error rates of the `Rz` and `Rx` gates change for differing rotation angles, rather than their absolute values. Therefore, a simple metric was chosen to track this, named here as the relative error, E<sub>rel</sub>, given by
+
+E<sub>rel</sub> = (N<sub>measured</sub> - N<sub>expected</sub>) / N<sub>expected</sub>
+
+which is found for each rotation angle and repeat number, where N<sub>measured</sub> is the number of shots with a given output and N<sub>expected</sub> is the number of shots expected for that output. This metric is simple to calculate and allows for direct comparison across different rotation angles and output channels. Other metrics, such as the fidelity, can contain information about the distance between the produced and desired state, but in this initial investigation conducted with simple circuits this level of analysis is out of scope and the simple metric of E<sub>rel</sub> is sufficient.
+
+<!-- tidy up below paras -->
+
+As a 1-qubit circuit, the circuit used to investigate the `Rx` gate shown in [Figure 3](#fig-2) has two possible outcomes, `|0⟩` and `|1⟩`. The frequency of output of each channel therefore move inversely (any result not given as `|0⟩` is known to be `|1⟩`). Therefore, this gate can be investigated by considering only the E<sub>rel</sub> of the `|1⟩` channel. However, the circuit used to investigate the `Rzz` gate has four possible outcomes, meaning considering only one potential output could obscure behaviour of specific outcomes. For the `Rzz` gate, therefore, E<sub>rel</sub> is found for each potential output.
+
+N<sub>expected</sub> was found for the circuits used to investigate the `Rx` and `Rzz` gates by evaluating the theoretically predicted states for each rotation angle and circuit, the expressions of which are simple due to the simplicity of the circuits investigated. The mechanisms used to calcuate N<sub>expected</sub> differ based on the circuit construction and are defined for the `Rx` and `Rzz` gates in the following section.
+
+<!-- starting with a big old statement here - hell of an expectation? -->
+
+Due to the periodic nature of the angle of rotation, any relationship found between the error rate and rotation angle is expected to have a periodic nature. Each graph is therefore fitted with a first order Fourier series approximation of the form
+
+<!-- ref here would be great
+<!-- rotation angle double here? -->
+<!--
+E<sub>rel</sub> = β<sub>0</sub> ​+ β<sub>1</sub>​sin(θ) + β<sub>2</sub>​cos(θ)
+
+using a least-squares regression to determine the coefficients of each term. The p-values of the β coefficients are then used to determine whether the inclusion of these terms aids the quality of this fit (using the p > 0.005 significance threshold). If neither the sin or cosine terms are found to provide statistically significant improvements to the fit quality, it is deemed that no relationship exists between the error rate and rotation angle. It is possible that this analysis neglects a relationship between the error rate and rotation angle that would be captured by higher order terms of the Fourier series, but this was deemed sufficient for the initial analysis. --> -->
 
 ### Experimental Setup
 
-The `Rx` and `Rzz` gates were investigated using different circuits and experimental parameters, largely due to hardware limitations under the IBM free programme. A summary of these parameters is given below, and further detail provided in the paragraphs following.
+The `Rx` and `Rzz` gates were investigated using different circuits and experimental parameters, largely due to the limited free access provided by IBM for their devices. A summary of these parameters is given below, and further detail provided in the paragraphs following.
 
 **Experimental Parameters:**
 
@@ -73,9 +93,25 @@ The `Rx` and `Rzz` gates were investigated using different circuits and experime
   - Circuit: [Figure 4](#fig-3)
   - Input: `|00⟩`
   - Shots: 2<sup>16</sup>, 2<sup>15</sup>, 2<sup>15</sup> (over 3 dates)
-  - Angles: 20 equally spaced between 0 and π
+  - Angles: 20 equally spaced between 0 and 2π
 
-For both gates, the simplest circuit possible was used to minimise the evaluation time, corresponding to the circuits seen in [Figure 3](#fig-2) and [Figure 4](#fig-3). As the `Rx` was investigated using a simulator it was constrained only by the computing power of the local device used, whereas the `Rzz` gate investigation had to be conducted within the 20 minutes of free quantum processing time offered by IBM over the time period this work was carried out. For this reason, the `Rx` gate was investigated at more angles, more shots, and for more repeats than the `Rzz` gate. For both `Rx` and `Rzz` gates the an angle range of \[0 π\] covers the full angle range due to symmetries around 0 and π.
+<!-- make sure below still makes sense now metrics has been moved up -->
+
+For both gates, the simplest circuit possible was used to minimise the evaluation time, corresponding to the circuits seen in [Figure 3](#fig-2) and [Figure 4](#fig-3). As the `Rx` was investigated using a simulator it was constrained only by the computing power of the local device used, whereas the `Rzz` gate investigation had to be conducted within the 20 minutes of free quantum processing time offered by IBM over the time period this work was carried out. For this reason, the `Rx` gate was investigated at more angles, more shots, and for more repeats than the `Rzz` gate.
+
+When the `Rx` investigation circuit, given in [Figure 3](#fig-2) is evaluated with the input `|0⟩` and a rotation angle θ, the anticipated result, `|φ⟩`, is given by
+
+|φ⟩ = cos(θ/2)|0⟩ - i sin(θ/2)|1⟩
+
+meaning the likelihood of the measuring |1⟩ from the final state is given by
+
+P(1) = sin<sup>2</sup>(θ/2)
+
+allowing the N<sub>expected</sub> metric to be calculated for each `Rx` gate rotation angle of θ using
+
+N<sub>expected</sub> = N<sub>shots</sub> \* sin<sup>2</sup>(θ/2)
+
+As sin<sup>2</sup>(θ/2) is symmetrical over the ranges [-π, 0] and [0, π], a full 2π rotation angle can be investigated by considering only the range [0, π].
 
 ![Circuit for Rx Investigation](images/rx_investigation_circuit.png)  
 **Figure 3:** Circuit used to explore the error profile of the `Rx` gate.  
@@ -85,51 +121,13 @@ When the `Rzz` investigation circuit, given in [Figure 4](#fig-3) is evaluated w
 
 |φ⟩ = (1/2) (|00⟩ + |01⟩ + |10⟩ + |11⟩)
 
-this knowledge of the ideal output state was used to determine the error rate of the `Rzz` gate.
+meaning there is even likelihood of measuring any of the four possible output bit strings. Therefore, N<sub>expected</sub> is defined for each angle and possible outcome as
 
-<!-- This was done for 20 equally spaced angles between 0 and π, which covers the full angle range of the `Rzz` gate due to symmetries around 0 and π. This was done for 3 separate initialisations of the `ibm_brisbane` device over 2 separate dates, for a number of shots given by (2<sup>16</sup>, 2<sup>15</sup>, 2<sup>15</sup>). The reduced number of shots was necessitated by limitations on the IBM device runtime available. -->
+N<sub>expected</sub> = N<sub>shots</sub> / 4
 
 ![Circuit for Rzz Investigation](images/rzz_investigation_circuit.png)  
 **Figure 4:** Circuit used to explore the error profile of the `Rzz` gate.  
 <a id="fig-3"></a>
-
-### Evaluation Metrics
-
-This investigation is concerned primarily with the how the error rates of the `Rz` and `Rx` gates change differing rotation angles, rather than their absolute values. Therefore, a simple metric was chosen to track this, named here as the relative error, E<sub>rel</sub>, given by
-
-E<sub>rel</sub> = (N<sub>measured</sub> - N<sub>expected</sub>) / N<sub>expected</sub>
-
-which is found for each rotation angle and repeat number, where N<sub>measured</sub> is the number of shots with a given output and N<sub>expected</sub> is the number of shots expected for that output. This metric is simple to calculate and allows for direct comparison across different rotation angles and output channels. Other metrics, such as the fidelity, can contain information about the distance between about the distance between the produced and desired state, but in this initial investigation conducted with simple circuits this level of analysis is out of scope and the simple metric of E<sub>rel</sub> is sufficient.
-
-<!-- tighten up wording, say RX and RZZ gates so often can I trim this? and "circuit used to investigate RX gate... so clunky -->
-
-N<sub>expected</sub> was found for the circuits used to investigate the `Rx` and `Rzz` gates by evaluating the theoretically predicted states for each rotation angle and circuit, the expressions of which are simple due to the simplicity of the circuits investigated. As described in Section 3, the `Rx` gate circuit is expected to produce the state STATE which will will result in the measurement `|1⟩` with probability PROB, where THETA is the rotation angle. For the `Rx` gate N<sub>expected</sub> is therefore defined as
-
-<!-- TODO: why on earth am I measuring cos**2(theta) for P(1) for the Rx circuit? -->
-
-EQN
-
-The `Rzz` gate is expected to produce an equal superposition of four states, as described in Section 3 and the expression STATE. Therefore, N<sub>expected</sub> is defined for each angle and possible outcome as
-
-N<sub>expected</sub> = N<sub>shots</sub> / 4
-
-As a 1-qubit circuit, the circuit used to investigate the `Rx` gate shown in [Figure 3](#fig-2) has two possible outcomes, `|0⟩` and `|1⟩`. The frequency of output of each channel therefore move inversely (any result not given as `|0⟩` is known to be `|1⟩`). Therefore, this gate can be investigated by considering only the E<sub>rel</sub> of the `|1⟩` channel, comparing the frequency of measuring outputs of `|1⟩` between the simulations with and without noise. However, the circuit used to investigate the `Rzz` gate has four possible outcomes, meaning considering only one potential output could obscure behaviour of specific outcomes. For the `Rzz` gate, therefore, E<sub>rel</sub> is found for each potential output.
-
-<!-- A summary of this can be seen in [Table 1](#gate-table).
-
----
-
-<a id="gate-table"></a>
-
-### Table 1: Summary of Gate Investigations
-
-| Gate | Circuit | Input | Expected Output |
-
-| ------ | -------------------------------- | ----- | --------------- | ----- | ----- | ----- | ----- | ---- |
-
-| Rx(θ) | H → Rx(θ) → H → Measure | | 0⟩ | | 1⟩ |
-
-| Rzz(θ) | H ⊗ H → Rzz(θ) → H ⊗ H → Measure | |00⟩ | 1/2 ( |00⟩ + |01⟩ + |10⟩ + |11⟩) | -->
 
 ---
 
@@ -138,10 +136,11 @@ As a 1-qubit circuit, the circuit used to investigate the `Rx` gate shown in [Fi
 ### Rzz Gate
 
 <!-- 2. TODO: check axis and titles etc, statistical test, double check angle range (doubling the angle going in) -->
+<!-- Make logic of rotation angle vs metrics, doubled etc,  -->
 
 The results of the `Rzz` gate investigation can be seen in [Figure 5](#fig-4), where the errors are the total length of the standard deviation across the three initialisations of the devices over the separate dates.
 
-![Rzz Gate Results](images/rzz_err_by_angle_hardware_3reps.png)  
+![Rzz Gate Results](images/rzz_error_rotation_angle.png)  
 **Figure 5:** Results of the `Rzz` gate angle investigation, showing the relative error for each output channel. Different behaviour can be observed for each of the channels, but these is limited evidence of a relationship between the rotation angle and error rate for each channel.
 <a id="fig-4"></a>
 
@@ -149,44 +148,32 @@ The `Rzz` gate investigation revealed different behaviours for each output chann
 
 - Channels |01⟩ and |11⟩ were systematically detected more often than expected, indicating leakage into these channels.
 - Channel |00⟩ was detected less often than expected, showing leakage out of this channel.
-- Channel |10⟩ showed evidence of both under- and over-detection.
+- Channel |10⟩ showed evidence of both under- and over-detection at different rotation angles.
 
-Channels |00⟩ and |10⟩ exhibited potential relationships between rotation angle and error rate:
+<!-- implement a statistical test - do a fourier series fit maybe? -->
 
-- These channels displayed mirrored responses around x = 0.5π.
-- Channel |00⟩ has a high error rate over the 0π to 0.6π range, peaking near 0.2π, and a low error rate over the 0.6π to 1.0π range.
-- Channel |10⟩ has a high error rate over the 0.6π to 1.0π range, peaking near 0.8π, and a low error rate over the 0.0π to 0.6π range.
-
-The lack of strong evidence for a relationship between angle and error rate in [Figure 5](#fig-4) suggests that angle offsets are unlikely to minimize overall error rates. Furthermore, due to the mirrored responses, improvements to the |00⟩ channel's error rate would likely be offset by deteriorations in the |10⟩ channel, and vice versa.
+But no channel showed strong evidence of a relationship between the rotation angle and error rate. The lack of strong evidence for a relationship between angle and error rate in [Figure 5](#fig-4) suggests that angle offsets are unlikely to minimize overall error rates.
 
 ### Rx Gate
 
 <!-- 3. TODO: sharpen up the numbers used, check axis and titles etc, talk about reproducibility between each run (small error bars) -->
+<!-- TODO: redo with theory ideal numbers -->
 
 The results of the `Rx` gate investigation can be seen in [Figure 6](#fig-5).
 
-![Rx Gate Results](images/ibm_rx_error_5_16384_even_more.png)  
-**Figure 6:** Results of the `Rx` gate angle investigation, showing the relative error against the rotation angle. A clear sinusodial relationship can be seen, with a period of 0.5\(\pi\) and amplitude of .
+![Rx Gate Results](images/rx_error_rotation_angle.png)  
+**Figure 6:** Results of the `Rx` gate angle investigation, showing the relative error against the rotation angle. A clear sinusodial relationship can be seen, with a period of 0.5\(\pi\) and amplitude near 0.05.
 <a id="fig-5"></a>
 
-This investigation shows clear evidence of a sinusoidal dependence between the angle of rotation and the error rate of the gate. This relationship has a period of 0.5π, and the `Rx` gate has its highest error rates at rotation angles of [0π, 0.5π, 1.0π] and lowest error rates at rotation angles near [0.25π, 0.75π]. The peak to trough difference is significant, varying between a rate of 0.45 and 0.04, a peak to trough drop of 90%. It is noted that this error rate far exceeds the reported `Rx` error value for `ibm_brisbane`, likely due to error mitigation techniques employed by the hardware which are not utilised here (the `Rx` gate investigation was conducted using an IBM simulator loaded with an `ibm_brisbane` noise model).
+This investigation shows clear evidence of a sinusoidal dependence between the angle of rotation and the error rate of the gate. This relationship has a period of 0.5π, and the `Rx` gate has its highest error rates at rotation angles of [0π, 0.5π, 1.0π] and lowest error rates at rotation angles near [0.25π, 0.75π]. The peak to trough difference is significant, varying between a rate of near 0.05 and 0.005, a peak to trough drop of 90%. It is noted that this error rate far exceeds the reported `Rx` error value for `ibm_brisbane`, likely due to error mitigation techniques employed by the hardware which are not utilised here (the `Rx` gate investigation was conducted using an IBM simulator loaded with an `ibm_brisbane` noise model).
 
 While the `Rx` gate shows significant correlation between its error rate and rotation angle, the error rate current QAOA implementations are dominated by the `Rzz` gate contribution. While this remains the case, improvements to the error rate of the `Rx` gate would provide negligible (and undetectable) benefit to the quality of QAOA generated results. This inhibits investigations into whether QAOA results can be improved by leveraging `Rx` gates tuned to low error rotation angles.
 
-<!-- ### Results Summary
-
-A summary of the results findings can be seen in Table 1, below.
-
-| Gate | Error Dependence on Angle | Key Findings                             |
-| ---- | ------------------------- | ---------------------------------------- | ------- | ------------- |
-| Rzz  | Weak evidence             | Mirrored error profiles for              | 00⟩ and | 10⟩ channels. |
-| Rx   | Strong sinusoidal         | 90% error reduction from peak to trough. |
-
---- -->
+<!-- summary? -->
 
 ## 5. Conclusion
 
-While the `Rx` gate exhibits a strong sinusoidal dependence on rotation angle, its contribution to QAOA error is negligible. The `Rzz` gate shows weak evidence of angle-dependent error, but the mirrored error profiles of its channels limit the potential for error minimisation through angle tuning. While the QAOA gate error remains dominated by the `Rzz` gate, further investigations on IBM hardware are not recommended. Future work could probe these relationships when changing hardware device or when including error mitigation techniques.
+While the `Rx` gate exhibits a strong sinusoidal dependence on rotation angle, its contribution to QAOA error is negligible. The `Rzz` gate shows weak evidence of any angle-dependent error rate. While the QAOA gate error remains dominated by the `Rzz` gate, further investigations on IBM hardware are not recommended. Future work could probe these relationships when changing hardware device or when including error mitigation techniques.
 
 ## References
 
