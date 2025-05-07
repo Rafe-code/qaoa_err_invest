@@ -53,7 +53,7 @@ Generally, in each layer of the QAOA algorithm, the gate error contribution is d
 
 This investigation is concerned primarily with the how the error rates of the `Rz` and `Rx` gates change for differing rotation angles, rather than their absolute values. Therefore, a simple metric was chosen to track this, named here as the relative error, E<sub>rel</sub>, given by
 
-    E<sub>rel</sub> = (N<sub>measured</sub> - N<sub>expected</sub>) / N<sub>expected</sub>
+E<sub>rel</sub> = (N<sub>measured</sub> - N<sub>expected</sub>) / N<sub>expected</sub>
 
 which is found for each rotation angle and repeat number, where N<sub>measured</sub> is the number of shots with a given output and N<sub>expected</sub> is the number of shots expected for that output. This metric is simple to calculate and allows for direct comparison across different rotation angles and output channels. Other metrics, such as the fidelity, can contain information about the distance between the produced and desired state, but in this initial investigation conducted with simple circuits this level of analysis is out of scope and the simple metric of E<sub>rel</sub> is sufficient.
 
@@ -97,15 +97,15 @@ For both gates, the simplest circuit possible was used to minimise the evaluatio
 
 When the `Rx` investigation circuit, given in [Figure 3](#fig-2) is evaluated with the input `|0⟩` and a rotation angle θ, the anticipated result, `|φ⟩`, is given by
 
-    |φ⟩ = cos(θ/2)|0⟩ - i sin(θ/2)|1⟩
+|φ⟩ = cos(θ/2)|0⟩ - i sin(θ/2)|1⟩
 
 meaning the likelihood of the measuring |1⟩ from the final state is given by
 
-    P(1) = sin<sup>2</sup>(θ/2)
+P(1) = sin<sup>2</sup>(θ/2)
 
 allowing the N<sub>expected</sub> metric to be calculated for each `Rx` gate rotation angle of θ using
 
-    N<sub>expected</sub> = N<sub>shots</sub> \* sin<sup>2</sup>(θ/2)
+N<sub>expected</sub> = N<sub>shots</sub> \* sin<sup>2</sup>(θ/2)
 
 As sin<sup>2</sup>(θ/2) is symmetrical over the ranges [-π, 0] and [0, π], a full 2π rotation angle can be investigated by considering only the range [0, π].
 
@@ -115,11 +115,11 @@ As sin<sup>2</sup>(θ/2) is symmetrical over the ranges [-π, 0] and [0, π], a 
 
 When the `Rzz` investigation circuit, given in [Figure 4](#fig-3) is evaluated with the input `|00⟩`, the anticipated result, `|φ⟩`, is an equal superposition between all possible output states, given by
 
-    |φ⟩ = (1/2) (|00⟩ + |01⟩ + |10⟩ + |11⟩)
+|φ⟩ = (1/2) (|00⟩ + |01⟩ + |10⟩ + |11⟩)
 
 meaning there is even likelihood of measuring any of the four possible output bit strings. Therefore, N<sub>expected</sub> is defined for each angle and possible outcome as
 
-    N<sub>expected</sub> = N<sub>shots</sub> / 4
+N<sub>expected</sub> = N<sub>shots</sub> / 4
 
 ![Circuit for Rzz Investigation](images/rzz_investigation_circuit.png)  
 **Figure 4:** Circuit used to explore the error profile of the `Rzz` gate.  
